@@ -35,7 +35,12 @@ const ADDTYPE_EXT = 3;
 function AppClient() {
     var client = net.Socket();
     var connectedDeviceList = [];
-    this.sensordata = { id: 1 };
+    this.sensordata = {
+        extAddr: '0x00',
+        rssi: 'rssi_val',
+        tempSensor: 'temp_val',
+        hum: 'hum_val',
+    }
     self = this;
     client.connect(APP_SERVER_PORT, '192.168.0.105', function () {
     console.log("connect")
