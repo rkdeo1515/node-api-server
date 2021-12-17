@@ -19,25 +19,21 @@ router.get('/', function(req, res, next) {
 });
 
 router.get('/id', function(req, res, next) {
-  res.send(info.id);
+  res.send(client.sensordata.extAddr);
 });
 
 router.get('/rssi', function(req, res, next) {
-  res.send(info.rssi);
+  res.send(client.sensordata.rssi);
 });
 
 router.get('/temp', function(req, res, next) {
-  res.send(info.temp);
+  res.send(client.sensordata.tempSensor);
 });
 
 router.get('/hum_val', function(req, res, next) {
   res.send(info.hum);
 });
 
-router.get('/example', function (req, res, next) {
-  console.log(client.sensordata)
-  res.render('index', { title: 'Express' });
-});
 
 
 module.exports = router;
