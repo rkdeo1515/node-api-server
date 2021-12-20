@@ -1,20 +1,15 @@
 var ByteBuffer = require('bytebuffer')
 var net = require("net");
 
-
-
 const APP_SERVER_PORT = 5000;
 /* Timeout in ms to attempt to reconnect to app server */
-const APP_CLIENT_RECONNECT_TIMEOUT = 5000;
 const PKT_HEADER_SIZE = 4;
 const PKT_HEADER_LEN_FIELD = 0;
-const PKT_HEADER_SUBSYS_FIELD = 2;
 const PKT_HEADER_CMDID_FIELD = 3;
-const APPSRV_SYS_ID_RPC = 10;
 var Smsgs_dataFields = Object.freeze({
     tempSensor: 0x0001,
     lightSensor: 0x0002,
-    bandData: 0x0004,
+    humiditySensor: 0x0004,
     msgStats: 0x0008,
     configSettings: 0x0010,
 });
@@ -42,8 +37,8 @@ function AppClient() {
         hum: 'hum_val',
     }
     self = this;
-    client.connect(APP_SERVER_PORT, '192.168.0.105', function () {
-        console.log("connect")
+    client.connect(APP_SERVER_PORT, '192.168.0.45', function () {
+        console.log("gw connect")
     // appC_getNwkInfoFromAppServer()
     })
 
@@ -61,8 +56,14 @@ function AppClient() {
             var rx_cmd_id = rx_pkt_buf.readUint8(PKT_HEADER_CMDID_FIELD);
 
             switch (rx_cmd_id) {
-            case 9:
-                appC_processDeviceDataRxIndMsg(rx_pkt_buf)
+                case 9:
+                    try {
+                        appC_processDeviceDataRxIndMsg(rx_pkt_buf)
+                    }
+                    catch (ex) {
+                        console.log(ex)
+                    }
+                
                 break;
                 
             }
@@ -78,7 +79,6 @@ function AppClient() {
         deviceData.srcAddr.addrMode = data.readUint8();
         if (deviceData.srcAddr.addrMode == ADDTYPE_EXT) {
             deviceData.srcAddr.extAddr = data.readUint64();
-           
             var tempExtAddr = deviceData.srcAddr.extAddr.high.toString() + deviceData.srcAddr.extAddr.low.toString();
             deviceIdx = findDeviceIndexFromAddr(tempExtAddr);
         }
@@ -91,7 +91,7 @@ function AppClient() {
             return;
         }
 
-        deviceData.rssi = data.readInt8();
+        self.sensordata.rssi = data.readInt8();
         deviceData.cmdId = data.readUint8();
         // console.log("CMD ID: ", deviceData.cmdId);
         
@@ -103,19 +103,19 @@ function AppClient() {
             /* Temperature sensor data received */
             if (deviceData.frameControl & Smsgs_dataFields.tempSensor) {
                 deviceData.tempSensor = {};
-                deviceData.tempSensor.ambienceTemp = data.readUint16();
+                self.sensordata.temp = data.readUint16() / 10
                 deviceData.tempSensor.objectTemp = data.readUint16();
             }
-            if (deviceData.frameControl & Smsgs_dataFields.lightSensor) {
+            if(deviceData.frameControl & Smsgs_dataFields.lightSensor){
                 deviceData.lightSensor = {};
                 deviceData.lightSensor.rawData = data.readUint16();
             }
-
+            if(deviceData.frameControl & Smsgs_dataFields.humiditySensor){
+                self.sensordata.hum = data.readUint16();
+            }
         }
+        
         self.sensordata.id = deviceData.extAddr.high.toString() + deviceData.extAddr.low.toString()
-        self.sensordata.rssi = deviceData.rssi
-        self.sensordata.temp = deviceData.tempSensor
-        console.log(self.sensordata)
     }
     function findDeviceIndexFromAddr(srcAddr) {
                 /* find the device in the connected device list and update info */
