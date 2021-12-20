@@ -5,33 +5,26 @@ var AppClient = require('../socket/client')
 
 var client = new AppClient()
 
-var info = {
-  id: '0x00',
-  rssi: 'rssi_val',
-  temp: 'temp_val',
-  hum: 'hum_val',
-}
-
 /* GET home page. */
 router.get('/', function(req, res, next) {
   // res.render('index', { title: 'Express' });
-  res.send(JSON.stringify(info));
+  res.send(JSON.stringify(client.sensordata));
 });
 
 router.get('/id', function(req, res, next) {
-  res.send(client.sensordata.extAddr);
+  res.send(client.sensordata.id);
 });
 
 router.get('/rssi', function(req, res, next) {
-  res.send(client.sensordata.rssi);
+  res.send(String(client.sensordata.rssi));
 });
 
 router.get('/temp', function(req, res, next) {
-  res.send(client.sensordata.tempSensor);
+  res.send(client.sensordata.temp);
 });
 
-router.get('/hum_val', function(req, res, next) {
-  res.send(info.hum);
+router.get('/hum', function(req, res, next) {
+  res.send(client.sensordata.hum);
 });
 
 

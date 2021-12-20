@@ -36,19 +36,19 @@ function AppClient() {
     var client = net.Socket();
     var connectedDeviceList = [];
     this.sensordata = {
-        extAddr: '0x00',
+        id: '0x00',
         rssi: 'rssi_val',
-        tempSensor: 'temp_val',
+        temp: 'temp_val',
         hum: 'hum_val',
     }
     self = this;
     client.connect(APP_SERVER_PORT, '192.168.0.105', function () {
-    console.log("connect")
+        console.log("connect")
     // appC_getNwkInfoFromAppServer()
     })
 
     client.on('data', function (data) {
-    appC_processIncoming(data)
+        appC_processIncoming(data)
     })
 
     function appC_processIncoming(data) {
@@ -78,7 +78,7 @@ function AppClient() {
         deviceData.srcAddr.addrMode = data.readUint8();
         if (deviceData.srcAddr.addrMode == ADDTYPE_EXT) {
             deviceData.srcAddr.extAddr = data.readUint64();
-            console.log(deviceData)
+           
             var tempExtAddr = deviceData.srcAddr.extAddr.high.toString() + deviceData.srcAddr.extAddr.low.toString();
             deviceIdx = findDeviceIndexFromAddr(tempExtAddr);
         }
@@ -102,31 +102,33 @@ function AppClient() {
             // console.log("Frame Control: ", deviceData.frameControl);
             /* Temperature sensor data received */
             if (deviceData.frameControl & Smsgs_dataFields.tempSensor) {
-            deviceData.tempSensor = {};
-            deviceData.tempSensor.ambienceTemp = data.readUint16();
-            deviceData.tempSensor.objectTemp = data.readUint16();
+                deviceData.tempSensor = {};
+                deviceData.tempSensor.ambienceTemp = data.readUint16();
+                deviceData.tempSensor.objectTemp = data.readUint16();
             }
             if (deviceData.frameControl & Smsgs_dataFields.lightSensor) {
-            deviceData.lightSensor = {};
-            deviceData.lightSensor.rawData = data.readUint16();
+                deviceData.lightSensor = {};
+                deviceData.lightSensor.rawData = data.readUint16();
             }
 
         }
-        self.sensordata = deviceData
-        
-        }
-        function findDeviceIndexFromAddr(srcAddr) {
+        self.sensordata.id = deviceData.extAddr.high.toString() + deviceData.extAddr.low.toString()
+        self.sensordata.rssi = deviceData.rssi
+        self.sensordata.temp = deviceData.tempSensor
+        console.log(self.sensordata)
+    }
+    function findDeviceIndexFromAddr(srcAddr) {
                 /* find the device in the connected device list and update info */
         for (var i = 0; i < connectedDeviceList.length; i++) {
             var inarrayExtAdd = connectedDeviceList[i].extAddress.high.toString() + connectedDeviceList[i].extAddress.low.toString();
-            if (connectedDeviceList[i].shortAddress == srcAddr
-            || inarrayExtAdd == srcAddr) {
-            console.log("already exists");
-            return i;
+                console.log("Adrress : ", inarrayExtAdd)
+                if (connectedDeviceList[i].shortAddress == srcAddr || inarrayExtAdd == srcAddr) {
+                    console.log("already exists");
+                    return i;
+                }
             }
-        }
         return -1;
-        }
+    }
 }
 
 module.exports = AppClient;
