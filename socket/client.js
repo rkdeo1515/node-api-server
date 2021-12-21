@@ -37,7 +37,7 @@ function AppClient() {
     hum: "hum_val",
   };
   self = this;
-  client.connect(APP_SERVER_PORT, "192.168.0.128", function () {
+  client.connect(APP_SERVER_PORT, "l27.0.0.1", function () {
     console.log("gw connect");
   });
 
